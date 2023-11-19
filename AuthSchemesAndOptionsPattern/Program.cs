@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
@@ -21,11 +22,22 @@ namespace AuthSchemesAndOptionsPattern
             // Add services to the container.
 
             // Add services to the container.
-            builder.Services.AddDbContext<ApplicationDbContext>
-            (options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+            //builder.Services.AddDbContext<ApplicationDbContext>
+            //(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+            // Configure ConnectionStrings using IOptions
+
+           // builder.Services.Configure<AppSettings>(builder.Configuration.GetSection(AppSettings.ConnectionStrings));
+            builder.Services.AddOptions<AppSettings>()
+                .Bind(builder.Configuration.GetSection(AppSettings.ConnectionStrings))
+                .ValidateDataAnnotations();
+
+            // Add DbContext using IOptions
+            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    
             // configure the Identity 
-            builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+                builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(2);
                 options.Lockout.MaxFailedAccessAttempts = 5;
