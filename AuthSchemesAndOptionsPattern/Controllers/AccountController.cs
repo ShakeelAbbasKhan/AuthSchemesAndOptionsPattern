@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using Microsoft.Extensions.Options;
 
 namespace AuthSchemesAndOptionsPattern.Controllers
 {
@@ -18,14 +19,16 @@ namespace AuthSchemesAndOptionsPattern.Controllers
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly JWTService _jWTService;
         private readonly IConfiguration _configuration;
+        private readonly IOptionsSnapshot<AppSettings> _optionsSnapshot;
 
         public AccountController(UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager, JWTService jWTService, IConfiguration configuration)
+            SignInManager<ApplicationUser> signInManager, JWTService jWTService, IConfiguration configuration, IOptionsSnapshot<AppSettings> optionsSnapshot)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _configuration = configuration;
             _jWTService = jWTService;
+            _optionsSnapshot = optionsSnapshot;
         }
 
         //[HttpPost("Login")]
@@ -94,9 +97,11 @@ namespace AuthSchemesAndOptionsPattern.Controllers
                 }
 
 
-                if (_configuration["AuthenticationMethod"] == "Cookie")
-                {
-                    if (user != null)
+              //  if (_configuration["ConnectionStrings:AuthenticationMethod"] == "Cookie")
+                    if (_optionsSnapshot.Value.AuthenticationMethod == "Cookie")
+
+                    {
+                        if (user != null)
                     {
                         var claims = new List<Claim>
                             {
@@ -124,7 +129,9 @@ namespace AuthSchemesAndOptionsPattern.Controllers
                     return BadRequest("Invalid login attempt");
                 }
 
-                else if (_configuration["AuthenticationMethod"] == "JWT")
+              //  else if (_configuration["ConnectionStrings:AuthenticationMethod"] == "JWT")
+                    else if (_optionsSnapshot.Value.AuthenticationMethod == "JWT")
+                        
                 {
 
                     var result = await _signInManager.CheckPasswordSignInAsync(user, model.Password, true);

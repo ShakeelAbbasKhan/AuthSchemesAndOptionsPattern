@@ -1,6 +1,7 @@
 
 using AuthSchemesAndOptionsPattern.Data;
 using AuthSchemesAndOptionsPattern.Helper;
+using AuthSchemesAndOptionsPattern.Repository;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -21,16 +22,18 @@ namespace AuthSchemesAndOptionsPattern
 
             // Add services to the container.
 
-            // Add services to the container.
-            //builder.Services.AddDbContext<ApplicationDbContext>
-            //(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
             // Configure ConnectionStrings using IOptions
 
-           // builder.Services.Configure<AppSettings>(builder.Configuration.GetSection(AppSettings.ConnectionStrings));
-            builder.Services.AddOptions<AppSettings>()
-                .Bind(builder.Configuration.GetSection(AppSettings.ConnectionStrings))
-                .ValidateDataAnnotations();
+            builder.Services.Configure<AppSettings>(builder.Configuration.GetSection(AppSettings.ConnectionStrings));
+            builder.Services.Configure<AppSettings>(builder.Configuration.GetSection(AppSettings.JWTKey));
+
+
+            //builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("TopItems:ConnectionString"));
+            //builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("TopItems:JWTKey"));
+
+            //builder.Services.AddOptions<AppSettings>()
+            //    .Bind(builder.Configuration.GetSection(AppSettings.ConnectionStrings))
+            //    .ValidateDataAnnotations();
 
             // Add DbContext using IOptions
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -46,7 +49,17 @@ namespace AuthSchemesAndOptionsPattern
                 .AddDefaultTokenProviders()
                 .AddRoles<IdentityRole>();
 
+            
+
             builder.Services.AddScoped<JWTService>();
+            builder.Services.AddSingleton<TestService>();
+
+            builder.Services.AddAutoMapper(typeof(Program));
+            builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+            builder.Services.AddScoped<IProductRepository, ProductRepository>();
+
+            
+
             // Adding Authentication  
             builder.Services.AddAuthentication(options =>
             {
@@ -54,10 +67,6 @@ namespace AuthSchemesAndOptionsPattern
                 options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                // jwt
-
-                //  options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                //  options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
             })
 
             .AddCookie()
@@ -95,34 +104,21 @@ namespace AuthSchemesAndOptionsPattern
                 });
             });
 
-            //builder.Services.AddAuthorization(options =>
-            //{
-            //    options.AddPolicy("CookiePolicy", policy =>
-            //    {
-            //        policy.AuthenticationSchemes.Add(CookieAuthenticationDefaults.AuthenticationScheme);
-            //        policy.RequireAuthenticatedUser();
-            //    });
-            //});
-
-            //builder.Services.AddAuthorization(options =>
-            //{
-            //    options.AddPolicy("JwtPolicy", policy =>
-            //    {
-            //        policy.AuthenticationSchemes.Add(JwtBearerDefaults.AuthenticationScheme);
-            //        policy.RequireAuthenticatedUser();
-            //    });
-            //});
 
 
+            // builder.Services.AddControllers();
 
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers().AddNewtonsoftJson(options =>
+            options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+            );
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
     //        builder.Services.AddEndpointsApiExplorer();
-    //        builder.Services.AddSwaggerGen(options => {
+    //        builder.Services.AddSwaggerGen(options =>
+    //        {
     //            options.SwaggerDoc("v1", new OpenApiInfo { Title = "Permission Task -  API", Version = "v1" });
     //            options.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
     //            {
@@ -158,6 +154,7 @@ namespace AuthSchemesAndOptionsPattern
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+
 
             app.UseHttpsRedirection();
 
