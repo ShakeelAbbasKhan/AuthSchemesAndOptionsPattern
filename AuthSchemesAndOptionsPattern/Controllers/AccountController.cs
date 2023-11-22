@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Microsoft.Extensions.Options;
+using System.Data;
 
 namespace AuthSchemesAndOptionsPattern.Controllers
 {
@@ -77,8 +78,8 @@ namespace AuthSchemesAndOptionsPattern.Controllers
         //    return BadRequest(ModelState);
         //}
 
-        [HttpPost("Login")]
-        public async Task<IActionResult> Login(LoginViewModel model)
+        [HttpPost("LoginJWT")]
+        public async Task<IActionResult> LoginJWT(LoginViewModel model)
         {
             TokenViewModel _TokenViewModel = new TokenViewModel();
 
@@ -95,44 +96,6 @@ namespace AuthSchemesAndOptionsPattern.Controllers
                         return Ok("Password Expires Reset the Password");
                     }
                 }
-
-
-              //  if (_configuration["ConnectionStrings:AuthenticationMethod"] == "Cookie")
-                    if (_optionsSnapshot.Value.AuthenticationMethod == "Cookie")
-
-                    {
-                        if (user != null)
-                    {
-                        var claims = new List<Claim>
-                            {
-                                new Claim(ClaimTypes.Name, user.Email),
-
-                            };
-
-                        var claimsIdentity = new ClaimsIdentity(
-                            claims, CookieAuthenticationDefaults.AuthenticationScheme);
-
-                        var authProperties = new AuthenticationProperties
-                        {
-                            IsPersistent = true,
-                            AllowRefresh = true,
-                            ExpiresUtc = DateTime.UtcNow.AddDays(1)
-                        };
-
-                        await HttpContext.SignInAsync(
-                            CookieAuthenticationDefaults.AuthenticationScheme,
-                            new ClaimsPrincipal(claimsIdentity),
-                            authProperties);
-
-                        return Ok(new { message = "Login successful." });
-                    }
-                    return BadRequest("Invalid login attempt");
-                }
-
-              //  else if (_configuration["ConnectionStrings:AuthenticationMethod"] == "JWT")
-                    else if (_optionsSnapshot.Value.AuthenticationMethod == "JWT")
-                        
-                {
 
                     var result = await _signInManager.CheckPasswordSignInAsync(user, model.Password, true);
 
@@ -167,54 +130,55 @@ namespace AuthSchemesAndOptionsPattern.Controllers
                 }
 
 
-
-
-                
-            }
-
             return BadRequest(ModelState);
         }
 
 
-        ////Generate Cookies When Logged In
-        //[HttpPost("loginCookies")]
-        //public async Task<IActionResult> LoginCookies([FromBody] LoginViewModel loginViewModel)
-        //{
-        //    if (ModelState.IsValid)
-        //    {
-        //        var user = await _userManager.FindByEmailAsync(loginViewModel.Email);
+        //Generate Cookies When Logged In
+        [HttpPost("LoginCookies")]
+        public async Task<IActionResult> LoginCookies([FromBody] LoginViewModel loginViewModel)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = await _userManager.FindByEmailAsync(loginViewModel.Email);
 
-        //        if (user != null)
-        //        {
-        //            var claims = new List<Claim>
-        //            {
-        //                new Claim(ClaimTypes.Name, user.Email),
+                if (user != null)
+                {
+                    var claims = new List<Claim>
+                    {
+                        new Claim(ClaimTypes.Name, user.Email),
 
-        //            };
+                    };
 
-        //            var claimsIdentity = new ClaimsIdentity(
-        //                claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                        var roles = await _userManager.GetRolesAsync(user);
+                        if (roles.Any())
+                        {
+                            claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+                        }
 
-        //            var authProperties = new AuthenticationProperties
-        //            {
-        //                IsPersistent = true,
-        //                AllowRefresh = true,
-        //                ExpiresUtc = DateTime.UtcNow.AddDays(1)
-        //            };
+            var claimsIdentity = new ClaimsIdentity(
+                        claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
-        //            await HttpContext.SignInAsync(
-        //                CookieAuthenticationDefaults.AuthenticationScheme,
-        //                new ClaimsPrincipal(claimsIdentity),
-        //                authProperties);
+                    var authProperties = new AuthenticationProperties
+                    {
+                        IsPersistent = true,
+                        AllowRefresh = true,
+                        ExpiresUtc = DateTime.UtcNow.AddDays(1)
+                    };
 
-        //            return Ok(new { message = "Login successful." });
-        //        }
+                    await HttpContext.SignInAsync(
+                        CookieAuthenticationDefaults.AuthenticationScheme,
+                        new ClaimsPrincipal(claimsIdentity),
+                        authProperties);
 
-        //        return BadRequest(new { message = "Invalid login attempt." });
-        //    }
+                    return Ok(new { message = "Login successful." });
+                }
 
-        //    return BadRequest(new { message = "Invalid model state" });
-        //}
+                return BadRequest(new { message = "Invalid login attempt." });
+            }
+
+            return BadRequest(new { message = "Invalid model state" });
+        }
 
 
 

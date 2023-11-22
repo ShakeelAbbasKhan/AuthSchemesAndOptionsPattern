@@ -30,29 +30,33 @@ namespace AuthSchemesAndOptionsPattern.Controllers
         private readonly IProductRepository _productRepository;
         private readonly IMapper _mapper;
 
-        public ProductController(ApplicationDbContext context,IOptions<AppSettings> options,IOptionsSnapshot<AppSettings> optionsSnapshot,IOptionsMonitor<AppSettings> optionsMonitor, IProductRepository productRepository,IMapper mapper)
+        private readonly IConfiguration Configuration;
+        public AppSettings? positionOptions { get; private set; }
+        public ProductController(ApplicationDbContext context,IOptions<AppSettings> options, IOptionsSnapshot<AppSettings> optionsSnapshot, IOptionsMonitor<AppSettings> optionsMonitor, IProductRepository productRepository, IMapper mapper
+            ,IConfiguration configuration)
         {
             _context = context;
-            _options = options;
             _optionsEager = options.Value;
             _optionsSnapshotEager = optionsSnapshot.Value;
             _optionsMonitorEager = optionsMonitor.CurrentValue;
 
+            _options = options;
             _optionsSnapshot = optionsSnapshot;
             _optionsMonitor = optionsMonitor;
             _productRepository = productRepository;
             _mapper = mapper;
-
+            Configuration = configuration;
         }
         //  [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
         [Authorize(Policy = "CookiePolicy")]
+
         [HttpGet("GetByCookie")]
         public IActionResult GetByCookie()
         {
             return Ok("you hit by cookie");
         }
 
-        // [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [Authorize(Policy = "JwtPolicy")]
         [HttpGet("GetByJWT")]
         
@@ -61,6 +65,41 @@ namespace AuthSchemesAndOptionsPattern.Controllers
             return Ok("you hit by jwt");
         }
 
+        [Authorize]
+        [HttpGet("GetByBoth")]
+
+        public IActionResult GetByBoth()
+        {
+            return Ok("you hit by both jwt and cookie");
+        }
+
+        [HttpGet("OnGet")]
+        public async Task<IActionResult> OnGet()
+        {
+            try
+            {
+
+                var positionOptions = new AppSettings();
+                Configuration.GetSection(AppSettings.ConnectionStrings).Bind(positionOptions);
+
+                return Content($"Default Connection: {positionOptions.DefaultConnection} \n" +
+                               $"Value: {positionOptions.ExampleValue}");
+
+
+                //positionOptions = Configuration.GetSection(AppSettings.ConnectionStrings)
+                //                                   .Get<AppSettings>();
+
+                //return Content($"Default Con: {positionOptions.DefaultConnection} \n" +
+                //               $"Value: {positionOptions.ExampleValue}");
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception: {ex.Message}");
+                return StatusCode(500, "Internal Server Error");
+            }
+
+        }
 
         [HttpGet("GetDataEager")]
         public async Task<IActionResult> GetDataEager()
@@ -76,18 +115,18 @@ namespace AuthSchemesAndOptionsPattern.Controllers
         }
 
 
-        [HttpGet("GetDataExplicit")]
-        public async Task<IActionResult> GetDataExplicit()
-        {
-            // var dbValue = _options.Value.DefaultConnection;
-            var optionsValueExplicit = _options.Value.ExampleValue;
-            var optionsSnapShotValueExplicit = _optionsSnapshot.Value.ExampleValue;
-            var optionsMonitorValueExplicit = _optionsMonitor.CurrentValue.ExampleValue;
+        //[HttpGet("GetDataExplicit")]
+        //public async Task<IActionResult> GetDataExplicit()
+        //{
+        //    // var dbValue = _options.Value.DefaultConnection;
+        //    var optionsValueExplicit = _options.Value.ExampleValue;
+        //    var optionsSnapShotValueExplicit = _optionsSnapshot.Value.ExampleValue;
+        //    var optionsMonitorValueExplicit = _optionsMonitor.CurrentValue.ExampleValue;
 
-            var responseMessage = $"Option Value: {optionsValueExplicit}, SnapShot Value: {optionsSnapShotValueExplicit}, Monitor Value: {optionsMonitorValueExplicit}";
+        //    var responseMessage = $"Option Value: {optionsValueExplicit}, SnapShot Value: {optionsSnapShotValueExplicit}, Monitor Value: {optionsMonitorValueExplicit}";
 
-            return Ok(responseMessage);
-        }
+        //    return Ok(responseMessage);
+        //}
 
         [HttpGet("GetDataLazyLoading")]
         public async Task<IActionResult> GetDataLazyLoading()
@@ -96,7 +135,7 @@ namespace AuthSchemesAndOptionsPattern.Controllers
             var optionsMonitorValue = _optionsMonitor.CurrentValue.ExampleValue;
 
             var responseMessage = $"SnapShot Value: {optionsSnapShotValue}, Monitor Value: {optionsMonitorValue}";
-            
+
             return Ok(responseMessage);
         }
 

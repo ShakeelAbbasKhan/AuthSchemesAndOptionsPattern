@@ -49,7 +49,7 @@ namespace AuthSchemesAndOptionsPattern.Helper
             }
 
             // var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWTKey:Secret"]));
-            var checkValue = _optionsSnapshot.Value;
+           // var checkValue = _optionsSnapshot.Value;
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_optionsSnapshot.Value.Secret));
 
 
@@ -58,10 +58,10 @@ namespace AuthSchemesAndOptionsPattern.Helper
             var securityToken = new JwtSecurityToken(
                 claims: authClaims,
                 expires: DateTime.Now.AddMinutes(60),
-                //issuer: _configuration["JWTKey:ValidIssuer"],
-                //audience: _configuration["JWTKey:ValidAudience"],
-                 issuer: _optionsSnapshot.Value.ValidIssuer,
-                audience: _optionsSnapshot.Value.ValidAudience,
+                issuer: _configuration["JWTKey:ValidIssuer"],
+                audience: _configuration["JWTKey:ValidAudience"],
+                // issuer: _optionsSnapshot.Value.ValidIssuer,
+                //audience: _optionsSnapshot.Value.ValidAudience,
                 signingCredentials: signingCred);
 
             string tokenString = new JwtSecurityTokenHandler().WriteToken(securityToken);

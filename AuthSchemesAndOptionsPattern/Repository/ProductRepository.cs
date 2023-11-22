@@ -44,7 +44,7 @@ namespace AuthSchemesAndOptionsPattern.Repository
             //if (product != null)
             //{
             //    await _context.Entry(product)
-            //        .Collection(p => p.Category) // Assuming Categories is the collection property
+            //        .Collection(p => p.Category) 
             //        .LoadAsync();
             //}
 
@@ -53,7 +53,7 @@ namespace AuthSchemesAndOptionsPattern.Repository
 
             // Lazy Loading
 
-            //List<Product> products = await _context.Products.ToListAsync();
+            //IEnumerable<Product> products = await _context.Products;
 
             //foreach(var product in products )
             //{
